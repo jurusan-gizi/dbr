@@ -147,3 +147,5 @@ table.t td:first-child{border-radius:12px 0 0 12px} table.t td:last-child{border
 .paper .qrp{float:right;margin-left:12px;text-align:center;font-size:10px;font-family:Arial,sans-serif}
 .paper .qrp img,.paper .qrp canvas{width:78px!important;height:78px!important}
 @page{size:A4 portrait;margin:12mm}
+
+.cb{width:18px;height:18px;accent-color:var(--tq);cursor:pointer;vertical-align:middle}

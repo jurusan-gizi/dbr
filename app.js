@@ -6,6 +6,7 @@ let D = null;
 let TOKEN = store('get', 'edbr_token') || '';
 let CUR = 'dashboard';
 const Q = { barang: '', barangR: '', dbrR: '', cekR: '' };
+const SEL = new Set();
 
 function store(op, k, v) { try { if (op === 'get') return localStorage.getItem(k); if (op === 'set') localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) { return null; } }
 
@@ -209,18 +210,34 @@ function showQR(id) {
 V.barang = () => {
   const q = Q.barang.toLowerCase();
   const its = D.items.filter(i => (!Q.barangR || i.ruangId === Q.barangR) && (!q || (i.nama + ' ' + i.merk + ' ' + i.kode + ' ' + i.nup).toLowerCase().includes(q)));
+  const vis = new Set(its.map(i => i.id)); [...SEL].forEach(id => { if (!vis.has(id)) SEL.delete(id); });
+  window._visItems = its.map(i => i.id);
   return `<div class="card"><div class="row" style="margin-bottom:6px">
    <select class="inp" onchange="Q.barangR=this.value;go('barang')">${roomOpts(Q.barangR, D.rooms, true)}</select>
    <input class="inp" placeholder="Cari nama/merk/kode/NUP" value="${esc(Q.barang)}" onkeydown="if(event.key==='Enter'){Q.barang=this.value;go('barang')}" style="flex:1;min-width:160px">
+   <button class="btn d" id="bulkDel" onclick="delSelected()" style="display:${SEL.size ? '' : 'none'}">${ic('trash')}Hapus terpilih (<span id="selN">${SEL.size}</span>)</button>
    <button class="btn g" onclick="exportBarang()">${ic('dl')}Unduh</button>
    <button class="btn p" onclick="formItem()">${ic('plus')}Tambah Barang</button></div>
    <div class="note">Kode Barang dan NUP diambil dari SIMAK-BMN/SAKTI. Kalau satu jenis barang kondisinya berbeda (mis. 49 kursi baik, 1 rusak), catat sebagai dua baris terpisah.</div>
-   <div class="tw"><table class="t"><tr><th>Nama Barang</th><th>Merk/Type</th><th>Kode / NUP</th><th>Tahun</th><th>Jml</th><th>Kondisi</th><th>Ruangan</th><th></th></tr>
-   ${its.map(i => `<tr><td><b>${esc(i.nama)}</b>${i.ket ? `<div class="muted">${esc(i.ket)}</div>` : ''}</td><td>${esc(i.merk) || '—'}</td>
+   <div class="tw"><table class="t"><tr><th style="width:34px"><input type="checkbox" class="cb" id="cbAll" title="Pilih semua yang tampil" ${its.length && its.every(i => SEL.has(i.id)) ? 'checked' : ''} onchange="selAll(this.checked)"></th><th>Nama Barang</th><th>Merk/Type</th><th>Kode / NUP</th><th>Tahun</th><th>Jml</th><th>Kondisi</th><th>Ruangan</th><th></th></tr>
+   ${its.map(i => `<tr><td><input type="checkbox" class="cb cbi" value="${i.id}" ${SEL.has(i.id) ? 'checked' : ''} onchange="selOne(this)"></td><td><b>${esc(i.nama)}</b>${i.ket ? `<div class="muted">${esc(i.ket)}</div>` : ''}</td><td>${esc(i.merk) || '—'}</td>
     <td>${i.kode || i.nup ? esc(i.kode) + ' / ' + esc(i.nup) : '<span class="chip k-RR">belum diisi</span>'}</td><td>${esc(i.tahun) || '—'}</td><td>${i.jumlah}</td><td>${chip(i.kondisi)}</td>
     <td>${esc(room(i.ruangId)?.kode || '—')}</td><td style="white-space:nowrap"><button class="btn g s" onclick="formItem('${i.id}')">${ic('edit')}</button>
-    <button class="btn d s" onclick="delItem('${i.id}')">${ic('trash')}</button></td></tr>`).join('') || '<tr><td colspan=8 class="empty">Tidak ada barang</td></tr>'}</table></div></div>`;
+    <button class="btn d s" onclick="delItem('${i.id}')">${ic('trash')}</button></td></tr>`).join('') || '<tr><td colspan=9 class="empty">Tidak ada barang</td></tr>'}</table></div></div>`;
 };
+function selUpd() {
+  const b = document.getElementById('bulkDel'); if (!b) return;
+  b.style.display = SEL.size ? '' : 'none'; document.getElementById('selN').textContent = SEL.size;
+  const all = document.getElementById('cbAll'); if (all) all.checked = (window._visItems || []).length > 0 && window._visItems.every(id => SEL.has(id));
+}
+function selOne(el) { el.checked ? SEL.add(el.value) : SEL.delete(el.value); selUpd(); }
+function selAll(on) { document.querySelectorAll('.cbi').forEach(el => { el.checked = on; on ? SEL.add(el.value) : SEL.delete(el.value); }); selUpd(); }
+function delSelected() {
+  const list = D.items.filter(i => SEL.has(i.id));
+  if (!list.length) return;
+  askConfirm(`Hapus <b>${list.length} barang</b> berikut?<div style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px">${list.map(i => `• ${esc(i.nama)} ${esc(i.merk)} — ${esc(room(i.ruangId)?.kode || '')} (${i.jumlah} unit)`).join('<br>')}</div>`,
+    async () => { if (await act('delItems', { ids: [...SEL] })) { SEL.clear(); go('barang'); } });
+}
 function formItem(id) {
   if (!D.rooms.length) return toast('Tambahkan ruangan dulu');
   const i = id ? D.items.find(x => x.id === id) : { ruangId: Q.barangR || D.rooms[0].id, nama: '', merk: '', kode: '', nup: '', tahun: '', jumlah: 1, kondisi: 'B', ket: '' };
