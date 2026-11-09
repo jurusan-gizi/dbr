@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#00535C">
+<title>DBR Ruangan — e-DBR Gizi</title>
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.wrap{max-width:720px;margin:0 auto;padding:18px}
+.hero{background:linear-gradient(165deg,#00626B,#11A39C);color:#fff;border-radius:24px;padding:20px;box-shadow:0 14px 30px rgba(0,83,92,.25);margin-bottom:16px}
+.hero small{opacity:.85}.hero h1{margin:4px 0 2px;font-size:26px}.hero .k{font-weight:800;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:20px;display:inline-block}
+.it{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dashed var(--line)}
+.it:last-child{border:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero" id="hero"><small>e-DBR Gizi · Daftar Barang Ruangan</small><h1>Memuat…</h1></div>
+  <div class="card" id="list"><div class="empty"><div class="spin" style="margin:0 auto"></div></div></div>
+  <p class="muted" style="text-align:center;margin-top:14px">Tampilan baca saja. Perubahan data hanya oleh Pengurus Barang / PJ Ruangan.</p>
+</div>
+<script src="config.js"></script>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const KND={B:'Baik',RR:'Rusak Ringan',RB:'Rusak Berat',BD:'Belum Dicek'};
+(async()=>{
+  const k=new URLSearchParams(location.search).get('k')||'';
+  const hero=document.getElementById('hero'),list=document.getElementById('list');
+  try{
+    const r=await fetch(APP_CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'publicDbr',kode:k})});
+    const j=await r.json(); if(!j.ok) throw new Error(j.msg);
+    const d=j.data, tot=d.items.reduce((a,b)=>a+b.jumlah,0);
+    document.title='DBR '+d.room.kode+' — e-DBR Gizi';
+    hero.innerHTML=`<small>${esc(d.settings.unit)}</small><h1>${esc(d.room.nama)}</h1><span class="k">${esc(d.room.kode)}</span>
+      <div style="margin-top:10px;font-size:13px;opacity:.9">PJ Ruangan: ${esc(d.room.pj||'—')}<br>${d.items.length} jenis · ${tot} unit · dicek ${d.room.lastCek?new Date(d.room.lastCek+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}):'belum pernah'}</div>`;
+    list.innerHTML=d.items.map(i=>`<div class="it"><div><b>${esc(i.nama)}</b><div class="muted">${esc(i.merk)}${i.tahun?' · '+esc(i.tahun):''}</div></div>
+      <div style="text-align:right"><b>${i.jumlah}</b><div><span class="chip k-${i.kondisi}">${KND[i.kondisi]||i.kondisi}</span></div></div></div>`).join('')||'<div class="empty">Belum ada barang tercatat</div>';
+  }catch(e){hero.innerHTML='<small>e-DBR Gizi</small><h1>DBR tidak dapat ditampilkan</h1>';list.innerHTML=`<div class="empty">${esc(e.message||'Gagal memuat data')}</div>`}
+})();
+</script>
+</body>
+</html>

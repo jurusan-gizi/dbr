@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#00535C">
+<title>e-DBR Gizi — Aplikasi Sarpras Jurusan Gizi</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="lib/qrcode.min.js"></script>
+</head>
+<body>
+<!-- ===== Login ===== -->
+<section class="login" id="loginView" style="display:none">
+  <form class="card" onsubmit="event.preventDefault();doLogin()">
+    <div class="lg"><svg class="i" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg></div>
+    <h1>e-DBR Gizi</h1>
+    <p class="c">Daftar Barang Ruangan · Jurusan Gizi<br>Poltekkes Kemenkes Makassar</p>
+    <div class="fld"><label>Username</label><input id="lu" autocomplete="username" required></div>
+    <div class="fld"><label>Password</label><input id="lp" type="password" autocomplete="current-password" required></div>
+    <button class="btn p" type="submit">Masuk</button>
+  </form>
+</section>
+
+<!-- ===== App ===== -->
+<div id="appView" style="display:none">
+<aside class="side" id="side">
+  <div class="brand">
+    <div class="logo"><svg class="i" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg></div>
+    <div><b>e-DBR Gizi</b><small>Sarpras Jurusan Gizi</small></div>
+  </div>
+  <div class="me"><div class="avatar" id="av"></div><div class="hi" id="hi"></div><div class="rl" id="rl"></div></div>
+  <nav class="nav" id="nav"></nav>
+  <div class="acts"><button onclick="formPass()">Ganti password</button><button onclick="doLogout()">Keluar</button></div>
+  <div class="foot">Poltekkes Kemenkes Makassar<br>e-DBR Gizi v1.0</div>
+</aside>
+<div class="scrim" id="scrim" onclick="toggleSide(false)"></div>
+<main class="main">
+  <div class="top">
+    <button class="burger" onclick="toggleSide(true)"><svg class="i" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <div><h1 id="ttl"></h1><div class="sub" id="ttlsub"></div></div>
+    <div class="sp"></div>
+    <div class="search" id="gsearch"><svg class="i" viewBox="0 0 24 24" style="color:var(--mut)"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="gq" placeholder="Cari barang…" onkeydown="if(event.key==='Enter'){Q.barang=this.value;go('barang')}"></div>
+    <button class="btn g s" onclick="refresh()" title="Muat ulang data">⟳ Muat ulang</button>
+  </div>
+  <div id="view"></div>
+</main>
+</div>
+
+<div class="ov" id="ov" onclick="if(event.target===this)closeM()"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+<div class="busy" id="busy"><div class="spin"></div></div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
