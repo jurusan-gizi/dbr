@@ -11,7 +11,7 @@ function store(op, k, v) { try { if (op === 'get') return localStorage.getItem(k
 
 /* ================= API ================= */
 async function call(action, payload = {}, silent = false) {
-  if (!silent) busy(true);
+  if (!silent) busy(true, action === 'bootstrap' ? 'Memuat data…' : action === 'login' ? 'Masuk…' : 'Menyimpan…');
   try {
     const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: TOKEN, ...payload }) });
     const j = await r.json();
@@ -22,7 +22,10 @@ async function call(action, payload = {}, silent = false) {
     if (j.data && j.data.me) D = j.data;
     return j;
   } catch (e) {
-    toast(e.message === 'Failed to fetch' ? 'Tidak dapat terhubung ke server. Periksa internet.' : e.message);
+    const net = /fetch|NetworkError|JSON|Unexpected token/i.test(e.message);
+    if (API.includes('GANTI_DENGAN')) toast('URL API belum diisi di config.js');
+    else toast(net ? 'Server tidak merespons. Cek URL API di config.js dan akses Web App harus "Siapa saja".' : e.message);
+    console.error('[e-DBR] ' + action + ':', e);
     throw e;
   } finally { if (!silent) busy(false); }
 }
@@ -78,7 +81,7 @@ const val = id => (document.getElementById(id)?.value || '').trim();
 const units = list => list.reduce((a, b) => a + (+b.jumlah || 0), 0);
 const roomOpts = (sel, list = myRooms(), all = false) => (all ? '<option value="">Semua ruangan</option>' : '') + list.map(r => `<option value="${r.id}" ${r.id === sel ? 'selected' : ''}>${esc(r.kode)} — ${esc(r.nama)}</option>`).join('');
 const publicUrl = r => new URL('ruang.html?k=' + encodeURIComponent(r.kode), location.href).href;
-function busy(on) { document.getElementById('busy').classList.toggle('on', on); }
+function busy(on, tx) { document.getElementById('busyTx').textContent = tx || ''; document.getElementById('busy').classList.toggle('on', on); }
 function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2800); }
 function openM(h) { document.getElementById('modal').innerHTML = h; document.getElementById('ov').classList.add('on'); }
 function closeM() { document.getElementById('ov').classList.remove('on'); }
