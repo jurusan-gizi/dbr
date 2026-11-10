@@ -43,12 +43,30 @@ async function doLogin() {
 }
 async function doLogout() {
   try { await call('logout', {}, true); } catch (e) { }
+  try { sessionStorage.setItem('edbr_nosso', '1'); } catch (e) { }   // jangan langsung masuk otomatis lagi
   logoutLocal();
+}
+/* ---- Masuk lewat Gizi-Link (SSO) ---- */
+function ssoStaf() { return window.GiziSSO && window.GiziSSO.getStaf ? window.GiziSSO.getStaf() : null; }
+async function masukSso() {
+  const s = ssoStaf();
+  if (!s) { if (window.GiziSSO) window.GiziSSO.masuk(location.href.split('#')[0], 'staf'); return; }
+  try {
+    const j = await call('loginSso', { sso: s.token });
+    try { sessionStorage.removeItem('edbr_nosso'); } catch (e) { }
+    TOKEN = j.token; store('set', 'edbr_token', TOKEN); D = j.data; showApp();
+    toast('Selamat datang, ' + D.me.nama);
+  } catch (e) {
+    try { sessionStorage.setItem('edbr_nosso', '1'); } catch (x) { }
+    logoutLocal();
+  }
 }
 function logoutLocal() {
   TOKEN = ''; D = null; store('del', 'edbr_token');
   document.getElementById('appView').style.display = 'none';
   document.getElementById('loginView').style.display = '';
+  const b = document.getElementById('btnSso');
+  if (b) b.style.display = window.GiziSSO ? '' : 'none';
 }
 function showApp() {
   document.getElementById('loginView').style.display = 'none';
@@ -432,6 +450,9 @@ function saveSet() {
 /* ================= START ================= */
 window.addEventListener('hashchange', () => { if (D) { const k = location.hash.slice(1); if (k && k !== CUR) go(k); } });
 (async function start() {
-  if (!TOKEN) return logoutLocal();
-  try { await call('bootstrap'); showApp(); } catch (e) { logoutLocal(); }
+  let nosso = false;
+  try { nosso = sessionStorage.getItem('edbr_nosso') === '1'; } catch (e) { }
+  if (!TOKEN) return ssoStaf() && !nosso ? masukSso() : logoutLocal();
+  try { await call('bootstrap'); showApp(); }
+  catch (e) { if (ssoStaf() && !nosso) masukSso(); else logoutLocal(); }
 })();

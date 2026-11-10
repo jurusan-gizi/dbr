@@ -23,6 +23,7 @@
     <div class="fld"><label>Username</label><input id="lu" autocomplete="username" required></div>
     <div class="fld"><label>Password</label><input id="lp" type="password" autocomplete="current-password" required></div>
     <button class="btn p" type="submit">Masuk</button>
+    <button class="btn" type="button" id="btnSso" onclick="masukSso()" style="display:none;width:100%;margin-top:10px">🔗 Masuk lewat Gizi-Link</button>
   </form>
 </section>
 
@@ -56,6 +57,7 @@
 <div class="toast" id="toast"></div>
 <div class="busy" id="busy"><div style="text-align:center"><div class="spin" style="margin:0 auto"></div><div id="busyTx" style="margin-top:12px;font-weight:700;color:var(--dk);font-size:13px"></div></div></div>
 
+<script src="https://jurusan-gizi.github.io/sso.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
 <script>
